@@ -2,8 +2,7 @@
  A Web App here Users can easily create accounts, log in, explore job listings, and apply for their dream jobs, all within a user-friendly interface.
 
 Step 1: Clone the Repository
-git clone https://github.com/your-username/Job_Search.git
-
+git clone https://github.com/MR-Shivam-Tiwari/Job_Search.git
 Step 2: Set Up Your Project </br>
 cd Api_jobs </br>
 cd Backend
