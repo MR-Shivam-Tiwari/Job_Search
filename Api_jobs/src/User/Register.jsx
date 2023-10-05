@@ -6,64 +6,71 @@ import * as Yup from "yup";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { useRef } from "react";
-// import { toast } from "react-hot-toast";
-const validationSchema = Yup.object({
-  email: Yup.string()
-    .email("Invalid email format")
-    .required("Email is required"),
-  password: Yup.string()
-    .required("Password is required")
-    .min(8, "Password must be at least 8 characters long"),
-});
+import { createUserWithEmailAndPassword , updateProfile} from "firebase/auth";
+import { auth } from "./firebase";
+import { Details } from "@mui/icons-material";
 
 function Register() {
-  const [state, setState] = useState(false);
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
+  const [state, setState] = useState(false);
+  const [errormsg, seterrormsg] = useState("");
+  const [submitbuttondesabled, setsubmitbuttondesabled] = useState(false);
   const [details, setdetails] = useState({
     name: "",
     email: "",
     password: "",
   });
-  const handleSubmit = async (e) => {
-    e.preventDefault();
 
-    if (!details) {
-      console.error("Details object is not defined.");
+  const handleSubmit = () => {
+    if (!details.name || !details.email || !details.password) {
+      seterrormsg("Fill All Fields");
       return;
     }
-
-    try {
-      const response = await fetch("http://localhost:5000/api/newuser", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: details.name,
-          email: details.email,
-          password: details.password,
-        }),
+    seterrormsg("");
+    console.log(details);
+    createUserWithEmailAndPassword(auth, details.email, details.password)
+      .then(async(res) => {
+        const user = res.user;
+        await updateProfile(user,{
+          displayName:details.name,
+        })
+        navigate("/")
+        console.log(res);
+      })
+      .catch((err) => {
+        console.log("Error",err)
+        seterrormsg(err.message);
       });
-
-      if (response.status === 409) {
-        console.error("User is already registered.");
-      } else if (response.ok) {
-        const json = await response.json();
-        console.log(json);
-        navigate("/");
-      } else {
-        const errorResponse = await response.json();
-        console.error("Registration failed:", errorResponse.message);
-      }
-    } catch (error) {
-      console.error("An error occurred:", error);
-    }
   };
 
-  const handleChange = (event) => {
-    setdetails({ ...details, [event.target.name]: event.target.value });
-  };
+  // const handleSubmit = async (e) => {
+  //   e.preventDefault();
+  //   const response = await fetch("http://localhost:5000/api/newuser", {
+  //     method: "POST",
+  //     headers: {
+  //       "Content-Type": "application/json",
+  //     },
+  //     body: JSON.stringify({
+  //       name: details.name,
+  //       email: details.email,
+  //       password: details.password,
+  //       location: details.geoloaction,
+  //     }),
+  //   });
+
+  //   const json = await response.json();
+  //   console.log(json);
+  //   if (json.success) {
+  //     // Registration was successful, navigate to the login page
+
+  //     navigate("/login");
+  //   } else {
+  //     alert("Enter Valid Credentials");
+  //   }
+  // };
+  // const handleChange = (event) => {
+  //   setdetails({ ...details, [event.target.name]: event.target.value });
+  // };
 
   return (
     <div>
@@ -82,7 +89,9 @@ function Register() {
                   Start your 30-day free trial. Cancel anytime.
                 </p>
 
-                <form onSubmit={handleSubmit}>
+                <form
+                // onSubmit={handleSubmit}
+                >
                   <FormLabel className="font-weight-bold">Name*</FormLabel>
                   <Input
                     placeholder="Enter your Name"
@@ -90,8 +99,14 @@ function Register() {
                     color="white"
                     name="name"
                     className="border mb-3"
-                    value={details.name}
-                    onChange={handleChange}
+                    onChange={(event) =>
+                      setdetails((prev) => ({
+                        ...prev,
+                        name: event.target.value,
+                      }))
+                    }
+                    // value={details.name}
+                    // onChange={handleChange}
                     //   {...formik.getFieldProps("email")}
                   />
                   <FormLabel className="font-weight-bold">Email*</FormLabel>
@@ -101,8 +116,14 @@ function Register() {
                     color="white"
                     className="border mb-3"
                     name="email"
-                    value={details.email}
-                    onChange={handleChange}
+                    onChange={(event) =>
+                      setdetails((prev) => ({
+                        ...prev,
+                        email: event.target.value,
+                      }))
+                    }
+                    // value={details.email}
+                    // onChange={handleChange}
                     //   {...formik.getFieldProps("email")}
                   />
                   {/* {formik.touched.email && formik.errors.email ? (
@@ -119,17 +140,15 @@ function Register() {
                     color="white"
                     className="border mb-3"
                     name="password"
-                    value={details.password}
-                    onChange={handleChange}
-                    //   {...formik.getFieldProps("password")}
-                    endDecorator={
-                      <i
-                        className={`bi ${
-                          showPassword ? "bi-eye-slash" : "bi-eye"
-                        }`}
-                        onClick={() => setShowPassword(!showPassword)}
-                      ></i>
+                    onChange={(event) =>
+                      setdetails((prev) => ({
+                        ...prev,
+                        password: event.target.value,
+                      }))
                     }
+                    // value={details.password}
+                    // onChange={handleChange}
+                    //   {...formik.getFieldProps("password")}
                   />
                   {/* {formik.touched.password && formik.errors.password ? (
                   <div className="error text-danger font-weight-bold mt-1">
@@ -139,13 +158,14 @@ function Register() {
                   {/* <p className="mb-3 fs-14 text-dark font-weight-bold">
                     Must be at least 8 characters.
                   </p> */}
-
+                  <p className="text-danger fw-bold">{errormsg}</p>
                   <Button
-                    type="submit"
                     className="text-white mb-3 mt-2"
-                    // color="primary"
+                    color="primary"
                     fullWidth
-                    style={{ backgroundColor: "#258aff" }}
+                    onClick={handleSubmit}
+                    disabled={submitbuttondesabled}
+                    style={{ backgroundColor: "#0d6efd" }}
                   >
                     Create Account
                   </Button>
@@ -163,12 +183,10 @@ function Register() {
             <div className="w-100" style={{ overflow: "hidden" }}>
               <img
                 className="w-100"
-                src="https://img.freepik.com/free-vector/mobile-login-concept-illustration_114360-83.jpg?w=740&t=st=1696424326~exp=1696424926~hmac=6c31d4c1a1c88f481aea731d6b5c127fddb67080f248397bbf01f0887458db81"
+                src="https://img.freepik.com/free-photo/sign-up-register-online-internet-web-concept_53876-133557.jpg?w=740&t=st=1696543375~exp=1696543975~hmac=e0b25569643b71293ed1125f32350c4637b8015cedf734823023e3637171449a"
                 alt="logo"
                 style={{
                   width: "100%",
-                  // marginTop: "-30%",
-                  // marginBottom: "-28%",
                 }}
               />
             </div>

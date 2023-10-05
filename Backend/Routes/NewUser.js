@@ -4,7 +4,11 @@ const User = require("../Models/User");
 const { body, validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
 const bcrypt = require("bcryptjs");
-const jwtSecret = "wasdevelopedagainstdraftietfoaut";
+const dotenv = require("dotenv"); // For handling environment variables
+
+dotenv.config(); // Load environment variables from a .env file
+
+const jwtSecret = process.env.JWT_SECRET || "default_secret"; // Use the environment variable or a default value
 
 // Middleware for handling validation errors
 function handleValidationErrors(req, res, next) {
@@ -44,10 +48,7 @@ router.post(
   }
 );
 
-
-
-// LOGIN USER
-
+// Login user
 router.post(
   "/loginuser",
   [
