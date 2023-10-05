@@ -1,4 +1,5 @@
-Job_Search Web App
+ <h2>Job_Search Web App </h2>
+ A Web App here Users can easily create accounts, log in, explore job listings, and apply for their dream jobs, all within a user-friendly interface.
 
 Step 1: Clone the Repository
 git clone https://github.com/your-username/Job_Search.git
